@@ -1,4 +1,6 @@
 module Main where
 
+import Lsm
+
 main :: IO ()
-main = putStrLn "Hello, Haskell!"
+main = putStrLn lsmTodo
