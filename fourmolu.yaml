@@ -1,6 +1,6 @@
 # Generated from web app, for more information, see: https://fourmolu.github.io/config/
 indentation: 4
-column-limit: none
+column-limit: 80
 function-arrows: trailing
 comma-style: leading
 import-export-style: diff-friendly
