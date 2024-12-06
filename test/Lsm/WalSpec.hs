@@ -5,6 +5,7 @@ module Lsm.WalSpec where
 import Control.Exception
 import qualified Data.ByteString.Lazy as BSL
 import Lsm.Wal
+import Data.Map.Strict qualified as Map
 import System.Directory (removeFile)
 import System.IO
 import Test.Hspec
@@ -17,6 +18,7 @@ spec_wal = do
                 wal <- walCreate "test0.wal"
                 walWrite wal "key1" "value1"
                 walWrite wal "key2" "value2"
+                walWrite wal "key3" "old_value3"
                 walWrite wal "key3" "value3"
                 walSync wal
                 _ <- hClose (walHandler wal)
@@ -25,7 +27,9 @@ spec_wal = do
                     Left err -> expectationFailure $ "Failed to recover WAL: " ++ show (err)
                     Right (_, pairs) ->
                         do
-                            pairs `shouldBe` [("key1", "value1"), ("key2", "value2"), ("key3", "value3")]
+                            Map.lookup "key1" pairs `shouldBe` Just "value1"
+                            Map.lookup "key2" pairs `shouldBe` Just "value2"
+                            Map.lookup "key3" pairs `shouldBe` Just "value3"
         after
             (\_ -> (removeFile "test0.wal" `catch` (\(_ :: IOException) -> return ())))
             $ do

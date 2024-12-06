@@ -16,7 +16,7 @@ The on disk WAL format is a sequence of key-value pairs, each pair is stored in 
 +-------------------------------------+
 -}
 module Lsm.Wal (
-    Wal(..),
+    Wal (..),
     walCreate,
     walRecover,
     walWrite,
@@ -37,6 +37,7 @@ import Data.ByteString qualified as BS
 import Data.ByteString.Lazy (hGet)
 import Data.ByteString.Lazy qualified as BSL
 import Data.Digest.CRC32 (crc32, crc32Update)
+import Data.Map.Strict qualified as Map
 import Data.Word (Word16, Word32)
 import GHC.IO.Handle (hFlushAll)
 import Lsm.Error (LsmError (..), LsmErrorType (..), LsmResult)
@@ -49,7 +50,7 @@ import System.IO (
     openFile,
  )
 
-type WalList = [(BS.ByteString, BS.ByteString)]
+type WalList = Map.Map BS.ByteString BS.ByteString
 
 {- | A write-ahead log (WAL) is a data structure used to store the most recent
 key-value pairs on disk.
@@ -120,14 +121,14 @@ recoverList path = do
     return $ parsePairs content
     where
         parsePairs :: BSL.ByteString -> LsmResult WalList
-        parsePairs bs = go bs []
+        parsePairs bs = go bs Map.empty
             where
                 go remaining pairs =
                     if BSL.null remaining
                         then Right pairs
                         else case runGetOrFail getPair remaining of
                             Left (_, _, err) -> Left $ LsmError (Other err)
-                            Right (remaining', _, Right pair) -> go remaining' (pairs <> [pair])
+                            Right (remaining', _, Right (k, v)) -> go remaining' (Map.insert k v pairs)
                             Right (_, _, Left err) -> Left err
 
 -- | recoverWal reads the WAL file at the given path and returns a WAL instance and a list of key-value pairs.
