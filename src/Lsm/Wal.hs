@@ -24,6 +24,7 @@ module Lsm.Wal (
 ) where
 
 import Control.Exception (try)
+import Data.Binary (Binary)
 import Data.Binary qualified as B
 import Data.Binary.Get (
     bytesRead,
@@ -113,7 +114,9 @@ putPair (key, value) = do
     putWord32be crc32sum
 
 -- | recoverList reads or create the WAL file at the given path and returns a list of key-value pairs.
-recoverList :: FilePath -> IO (LsmResult WalList)
+recoverList ::
+    FilePath ->
+    IO (LsmResult WalList)
 recoverList path = do
     handler <- openFile path ReadWriteMode
     content <- BSL.hGetContents handler
@@ -132,7 +135,9 @@ recoverList path = do
                             Right (_, _, Left err) -> Left err
 
 -- | recoverWal reads the WAL file at the given path and returns a WAL instance and a list of key-value pairs.
-walRecover :: FilePath -> IO (LsmResult (Wal, WalList))
+walRecover ::
+    FilePath ->
+    IO (LsmResult (Wal, WalList))
 walRecover path = do
     walList <- recoverList path
     case walList of
@@ -148,7 +153,8 @@ walWrite wal key value = do
     BSL.hPutStr (walHandler wal) content
 
 -- | writeBatchWal writes the given key-value pairs to the WAL file.
-walWriteBatch :: Wal -> WalList -> IO ()
+walWriteBatch ::
+    Wal -> [(BS.ByteString, BS.ByteString)] -> IO ()
 walWriteBatch = error "TODO"
 
 -- | flushWal flushes the WAL file.
